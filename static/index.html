@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление очередью печати - Двоичная куча</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="logo-icon">🖨️</span>
+                <div class="logo-text">
+                    <h1>Очередь Печати</h1>
+                    <p>Визуализация Двоичной Кучи (Min-Heap) | Структуры данных и алгоритмы</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-generate" class="btn btn-secondary">⚡ Случайные задачи</button>
+                <button id="btn-clear" class="btn btn-danger">🗑️ Сбросить всё</button>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="app-grid">
+            
+            <!-- Left Column: Controls & Printers -->
+            <section class="grid-column left-column">
+                
+                <!-- Card: Add Job -->
+                <div class="card card-glow">
+                    <div class="card-header">
+                        <h2>➕ Добавить задачу в очередь</h2>
+                    </div>
+                    <form id="job-form" class="job-form">
+                        <div class="form-group">
+                            <label>Файл для печати (опционально)</label>
+                            <div class="file-upload-zone" id="file-dropzone">
+                                <span class="upload-icon">📄</span>
+                                <span class="upload-text">Нажмите или перетащите файл</span>
+                                <input type="file" id="job-file" style="display: none;">
+                            </div>
+                            <div id="file-info-chip" class="file-chip hidden">
+                                <span class="file-chip-icon">📎</span>
+                                <span class="file-chip-name" id="file-chip-name">filename.txt</span>
+                                <span class="file-chip-size" id="file-chip-size">(0 KB)</span>
+                                <span class="file-chip-remove" id="file-chip-remove" title="Убрать файл">✖</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="job-name">Название документа</label>
+                            <input type="text" id="job-name" required placeholder="Например, Реферат_Иванов.pdf">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="job-pages">Страницы</label>
+                                <input type="number" id="job-pages" min="1" max="500" required value="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="job-user">Автор</label>
+                                <input type="text" id="job-user" required placeholder="Студент / Преподаватель">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Приоритет задачи</label>
+                            <div class="priority-selector">
+                                <label class="priority-option prio-1">
+                                    <input type="radio" name="priority" value="1" checked>
+                                    <span class="prio-badge badge-high">1 (Высокий)</span>
+                                </label>
+                                <label class="priority-option prio-2">
+                                    <input type="radio" name="priority" value="2">
+                                    <span class="prio-badge badge-medium">2 (Средний)</span>
+                                </label>
+                                <label class="priority-option prio-3">
+                                    <input type="radio" name="priority" value="3">
+                                    <span class="prio-badge badge-low">3 (Низкий)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">Добавить в очередь</button>
+                    </form>
+                </div>
+
+                <!-- Card: Printers Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🖨️ Состояние принтеров</h2>
+                    </div>
+                    <div id="printers-container" class="printers-grid">
+                        <!-- Динамические данные принтеров -->
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+
+                <!-- Card: Add Printer -->
+                <div class="card collapsed-card">
+                    <div class="card-header" id="toggle-printer-form">
+                        <h2>⚙️ Добавить принтер <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <form id="printer-form" class="printer-form hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="printer-name">Имя принтера</label>
+                                <input type="text" id="printer-name" required placeholder="Canon LBP">
+                            </div>
+                            <div class="form-group">
+                                <label for="printer-speed">Скорость (стр/сек)</label>
+                                <input type="number" id="printer-speed" min="0.5" max="10" step="0.5" required value="1.5">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-block">Добавить</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Column: Visualizer & Logs -->
+            <section class="grid-column right-column">
+                
+                <!-- Card: Heap Data Structure Visualizer -->
+                <div class="card visualizer-card">
+                    <div class="card-header viz-header">
+                        <div class="viz-title-group">
+                            <h2>📊 Двоичная Куча (Приоритетная очередь)</h2>
+                            <span class="badge" id="heap-size-badge">Задач в очереди: 0</span>
+                        </div>
+                        <div class="tab-group">
+                            <button class="tab-btn active" data-tab="tree">🌳 Дерево</button>
+                            <button class="tab-btn" data-tab="array">📦 Массив в памяти</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body viz-body">
+                        <!-- Tab: Tree View -->
+                        <div id="tab-tree" class="tab-content active">
+                            <div class="svg-container">
+                                <svg id="heap-svg" width="800" height="320" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Рисуется через JS -->
+                                </svg>
+                                <div id="empty-heap-msg" class="empty-msg">Очередь пуста. Задачи отсутствуют.</div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Array View -->
+                        <div id="tab-array" class="tab-content">
+                            <div id="array-container" class="array-view-list">
+                                <!-- Список ячеек массива через JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="viz-footer">
+                        <div class="legend-item"><span class="legend-dot dot-high"></span> Высокий приоритет</div>
+                        <div class="legend-item"><span class="legend-dot dot-medium"></span> Средний приоритет</div>
+                        <div class="legend-item"><span class="legend-dot dot-low"></span> Низкий приоритет</div>
+                    </div>
+                </div>
+
+                <!-- Lower Row: Logs and History -->
+                <div class="lower-grid">
+                    <!-- Card: Completed Jobs -->
+                    <div class="card history-card">
+                        <div class="card-header">
+                            <h2>✅ История печати</h2>
+                        </div>
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Документ</th>
+                                        <th>Стр.</th>
+                                        <th>Автор</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-body">
+                                    <!-- Данные истории через JS -->
+                                    <tr>
+                                        <td colspan="4" class="no-history">История пуста</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card: Log Console -->
+                    <div class="card console-card">
+                        <div class="card-header">
+                            <h2>💻 Лог симулятора</h2>
+                        </div>
+                        <div class="console-body" id="console-logs">
+                            <!-- Логи через JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
